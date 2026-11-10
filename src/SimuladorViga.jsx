@@ -683,6 +683,12 @@ export default function SimuladorViga() {
   const sol = useMemo(() => ({ ...resolverViga({ E, b: sec.b, h: sec.h, cargas, pesoPropio }), E }), [E, sec, cargas, pesoPropio]);
 
   const ensayo = PRACTICA[orient].find((p) => !usarR2 && Math.abs(r1.a - 300) < 0.5 && Math.abs(r1.vol - p.lb * LAB.lb) < 0.001 && E === LAB.E && pesoPropio);
+  const ensayoCercano = PRACTICA[orient].reduce((mejor, p) =>
+    Math.abs(r1.vol - p.lb * LAB.lb) < Math.abs(r1.vol - mejor.lb * LAB.lb) ? p : mejor
+  );
+  const err300 = ((sol.v300 - ensayoCercano.an[0]) / ensayoCercano.an[0]) * 100;
+  const err500 = ((sol.v500 - ensayoCercano.an[1]) / ensayoCercano.an[1]) * 100;
+  const PEnsayo = ensayoCercano.lb * LAB.lb * LAB.rhoAgua * LAB.g;
   const usoFb = sol.sigma / LAB.Fb;
   const estado = usoFb < 0.8 ? { cls: "ok", txt: "Rango elástico" } : usoFb <= 1 ? { cls: "warn", txt: "Cerca del límite" } : { cls: "bad", txt: "Supera Fb" };
 
@@ -782,22 +788,29 @@ export default function SimuladorViga() {
           <GraficaCargaDeflexion orient={orient} sec={sec} E={E} pesoPropio={pesoPropio} r1={r1} r2={r2} usarR2={usarR2} sol={sol} />
         </section>
         <section>
-          <h2>Contra la práctica</h2>
-          {ensayo ? (
-            <div className="tabla-wrap">
-              <table className="mono">
-                <thead><tr><th>mm</th><th>300</th><th>500</th></tr></thead>
-                <tbody>
-                  <tr className="sim"><td>Simulador</td><td>{fmt(sol.v300, 3)}</td><td>{fmt(sol.v500, 3)}</td></tr>
-                  <tr><td>Analítico</td><td>{fmt(ensayo.an[0], 3)}</td><td>{fmt(ensayo.an[1], 3)}</td></tr>
-                  <tr><td>Ftool</td><td>{fmt(ensayo.ft[0], 3)}</td><td>{fmt(ensayo.ft[1], 3)}</td></tr>
-                  <tr className="exp"><td>Ensayo</td><td>{fmt(ensayo.ex[0], 1)}</td><td>{fmt(ensayo.ex[1], 1)}</td></tr>
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="nota">Elige un ensayo de la práctica para comparar el simulador con los valores del informe.</p>
-          )}
+          <h2>
+            Contra la práctica
+            <small className="mono">{fmt(ensayoCercano.lb, 1).replace(/,?0+$/, "")} lb · {fmt(PEnsayo, 2)} N</small>
+          </h2>
+          <p className="nota">
+            Comparando con ensayo {ensayo ? "exacto" : "más cercano"}: <b className="mono">{fmt(ensayoCercano.lb, 1).replace(/,?0+$/, "")} lb ({fmt(PEnsayo, 2)} N)</b>
+          </p>
+          <div className="tabla-wrap">
+            <table className="mono">
+              <thead><tr><th>mm</th><th>300</th><th>500</th></tr></thead>
+              <tbody>
+                <tr className="sim"><td>Simulador</td><td>{fmt(sol.v300, 3)}</td><td>{fmt(sol.v500, 3)}</td></tr>
+                <tr><td>Analítico</td><td>{fmt(ensayoCercano.an[0], 3)}</td><td>{fmt(ensayoCercano.an[1], 3)}</td></tr>
+                <tr><td>Ftool</td><td>{fmt(ensayoCercano.ft[0], 3)}</td><td>{fmt(ensayoCercano.ft[1], 3)}</td></tr>
+                <tr className="exp"><td>Ensayo</td><td>{fmt(ensayoCercano.ex[0], 1)}</td><td>{fmt(ensayoCercano.ex[1], 1)}</td></tr>
+                <tr className="err">
+                  <td>Error %</td>
+                  <td className={Math.abs(err300) < 0.5 ? "err-ok" : "err-warn"}>{fmt(err300, 2)} %</td>
+                  <td className={Math.abs(err500) < 0.5 ? "err-ok" : "err-warn"}>{fmt(err500, 2)} %</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </section>
       </aside>
 

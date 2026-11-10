@@ -111,6 +111,9 @@ th:first-child, td:first-child { text-align: left; color: var(--suave); font-fam
 th { color: var(--suave); font-weight: 500; }
 tr.sim td { color: var(--holo); } tr.sim td:first-child { color: var(--holo); font-weight: 600; }
 tr.exp td { color: var(--agua); }
+tr.err td:first-child { color: var(--fg); font-weight: 600; }
+td.err-ok { color: var(--ok); font-weight: 600; }
+td.err-warn { color: var(--agua); font-weight: 600; }
 
 .grafica-wrap { display: flex; flex-direction: column; gap: 8px; }
 .grafica-svg { width: 100%; height: auto; display: block; overflow: visible; }
